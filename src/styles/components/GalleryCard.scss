@@ -1,0 +1,11 @@
+@import "../utils/compat.scss";
+
+.GalleryCard {
+  background-color: white;
+  box-shadow: $materialShadow2;
+
+  img {
+    width: 100%;
+    height: auto;
+  }
+}

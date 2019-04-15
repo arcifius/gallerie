@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css?family=Pacifico|Roboto");
+@import "../utils/compat.scss";
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", sans-serif;
+
+  .App {
+    text-align: center;
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+
+    .App-header {
+      @include noSelect();
+      font-family: "Pacifico", cursive;
+      min-height: 128px;
+      max-height: 128px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: calc(25px + 2vmin);
+      transform: rotate(-5deg);
+    }
+
+    .App-content {
+      flex: 15;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
