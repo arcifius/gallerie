@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import BackButton from "components/BackButton";
-import Uploader from "components/Uploader";
+import ImageUploader from "components/ImageUploader";
 
 import "styles/components/Upload.scss";
 
 export default function UploadPage() {
+  const [images, setImages] = useState();
+
   function imagesDroppedIn(images) {
     console.log(images);
   }
@@ -13,7 +15,7 @@ export default function UploadPage() {
     <div className="Upload">
       <BackButton target={`/`} />
 
-      <Uploader onDrop={imagesDroppedIn} />
+      <ImageUploader onDrop={imagesDroppedIn} />
     </div>
   );
 }
