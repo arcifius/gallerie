@@ -1,24 +1,32 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import { Dimmer, Loader, Button } from "semantic-ui-react";
 import { useDropzone } from "react-dropzone";
+import useDimensions from "react-use-dimensions";
+import PhotoTaker from "components/PhotoTaker";
+
+import "styles/components/ImageUploader.scss";
 
 function ImageUploader(props) {
   const [images, setImages] = useState([]);
+  const [updating, setUpdating] = useState(false);
+  const [stream, setStream] = useState(null);
+  const [ref, { width }] = useDimensions();
+
+  useEffect(() => {
+    if (width > 960) {
+      setStream(null);
+    }
+  }, [width]);
 
   function parseImage(image) {
     return new Promise(resolve => {
       const reader = new FileReader();
 
       reader.onload = e => {
-        const result = {
+        resolve({
           name: image.name,
           data: reader.result
-        };
-
-        images.push(result);
-        resolve(result);
-        setImmediate(() => {
-          setImages(images);
         });
       };
 
@@ -26,30 +34,97 @@ function ImageUploader(props) {
     });
   }
 
-  const onDrop = useCallback(acceptedImages => {
-    acceptedImages.map(image => parseImage(image));
+  const onDrop = useCallback(async acceptedImages => {
+    setUpdating(true);
+    setStream(null);
+
+    const images = await Promise.all(
+      acceptedImages.map(image => parseImage(image))
+    );
+
+    setImages(images);
+    setUpdating(false);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
+  function takePhoto(ev) {
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: false })
+      .then(function(cameraStream) {
+        setStream(cameraStream);
+        setImages([]);
+      })
+      .catch(function(err) {
+        console.log("An error occured! " + err);
+      });
+  }
+
+  function handleFreshPhoto(photo) {
+    setImages([
+      {
+        name: `camera-${new Date().getTime()}`,
+        data: photo
+      }
+    ]);
+  }
+
   return (
-    <div {...getRootProps({ onDrop })}>
-      <input {...getInputProps({ accept: [`image/jpg`, `image/png`] })} />
-      {isDragActive ? (
-        <p>Drop the image here</p>
+    <div className="ImageUploader" ref={ref}>
+      {width < 960 ? (
+        <Button.Group vertical={width <= 320}>
+          <Button color="blue" {...getRootProps({ onDrop })}>
+            <input {...getInputProps({ accept: [`image/jpg`, `image/png`] })} />
+            Select photos from device
+          </Button>
+          <Button.Or />
+          <Button onClick={takePhoto} color="blue">
+            Take a fresh photo
+          </Button>
+        </Button.Group>
       ) : (
-        <p>Drag and drop images here or click to select multiple images</p>
+        <div {...getRootProps({ onDrop })} className="ImageUploader-dropzone">
+          <input {...getInputProps({ accept: [`image/jpg`, `image/png`] })} />
+          {isDragActive ? (
+            <p>Drop the image here</p>
+          ) : (
+            <p>Drag and drop images here or click to select multiple images</p>
+          )}
+        </div>
       )}
 
-      <div>
-        {images.map(image => (
-          <img key={image.name} alt={image.name} src={image.data} />
-        ))}
+      {stream && (
+        <PhotoTaker cameraStream={stream} onPhotoTaken={handleFreshPhoto} />
+      )}
+
+      <div className="ImageUploader-preview">
+        {!updating ? (
+          images.map(image => (
+            <img key={image.name} alt={image.name} src={image.data} />
+          ))
+        ) : (
+          <Dimmer active>
+            <Loader>Reading images</Loader>
+          </Dimmer>
+        )}
       </div>
+
+      {images.length > 0 && (
+        <div className="ImageUploader-actions">
+          <Button
+            icon="upload"
+            label="Send images"
+            color="green"
+            onClick={() => props.onUpload(images)}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-ImageUploader.propTypes = {};
+ImageUploader.propTypes = {
+  onUpload: PropTypes.func.isRequired
+};
 
 export default ImageUploader;

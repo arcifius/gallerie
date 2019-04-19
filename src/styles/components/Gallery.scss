@@ -1,4 +1,24 @@
+@import "../utils/compat.scss";
+
 .Gallery {
   width: 100%;
   flex: 1;
+  position: relative;
+  margin-bottom: 20px;
+
+  .new-image {
+    padding: 15px !important;
+  }
+
+  .board {
+    @include noSelect();
+    margin: 20px 0 20px 0;
+
+    img {
+      max-width: 100%;
+      max-height: 312px;
+      margin: 5px;
+      pointer-events: none;
+    }
+  }
 }

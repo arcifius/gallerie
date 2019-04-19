@@ -1,0 +1,11 @@
+.PhotoTaker {
+  .PhotoTaker-preview {
+    position: relative;
+    .PhotoTaker-actions {
+      position: absolute;
+      bottom: 15px;
+      left: 0;
+      right: 0;
+    }
+  }
+}

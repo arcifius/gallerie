@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import Uploader from "components/Uploader";
+import ImageUploader from "components/ImageUploader";
 import { fireEvent, render, cleanup } from "react-testing-library";
 
 // This adds custom jest matchers from jest-dom
@@ -10,7 +10,7 @@ afterEach(cleanup);
 
 it("renders without crashing", () => {
   const div = document.createElement("div");
-  ReactDOM.render(<Uploader onDrop={() => {}} />, div);
+  ReactDOM.render(<ImageUploader onDrop={() => {}} />, div);
   ReactDOM.unmountComponentAtNode(div);
 });
 
@@ -21,7 +21,7 @@ it("should invoke passed onDrop when the event occurs", () => {
   const data = mockData([file]);
   const onDrop = jest.fn();
 
-  const ui = <Uploader onDrop={onDrop} />;
+  const ui = <ImageUploader onDrop={onDrop} />;
   const { container } = render(ui);
   const dropzone = container.querySelector("div");
 
@@ -35,7 +35,7 @@ it("should show another message when drag is active", async () => {
   });
   const data = mockData([file]);
 
-  const ui = <Uploader onDrop={jest.fn()} />;
+  const ui = <ImageUploader onDrop={jest.fn()} />;
   const { container } = render(ui);
   const dropzone = container.querySelector("div");
 
