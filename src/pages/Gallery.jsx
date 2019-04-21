@@ -5,7 +5,7 @@ import axios from "axios";
 import "styles/components/Gallery.scss";
 import { Button } from "semantic-ui-react";
 
-export default function GalleryPage() {
+function GalleryPage() {
   const [images, setImages] = useState([]);
 
   useEffect(() => {
@@ -14,7 +14,9 @@ export default function GalleryPage() {
       setImages(response.data);
     }
 
-    fetch();
+    if (images.length === 0) {
+      fetch();
+    }
   }, []);
 
   return (
@@ -34,14 +36,18 @@ export default function GalleryPage() {
         ))}
       </div>
 
-      <Button
-        as={Link}
-        className="new-image"
-        to="/new"
-        label="Click here to add more"
-        icon="plus"
-        color="blue"
-      />
+      {images.length > 3 && (
+        <Button
+          as={Link}
+          className="new-image"
+          to="/new"
+          label="Click here to add more"
+          icon="plus"
+          color="blue"
+        />
+      )}
     </div>
   );
 }
+
+export default React.memo(GalleryPage);

@@ -1,47 +1,108 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import ImageUploader from "components/ImageUploader";
-import { fireEvent, render, cleanup } from "react-testing-library";
+import {
+  fireEvent,
+  render,
+  cleanup,
+  waitForElement
+} from "react-testing-library";
+import { WindowContext } from "contexts";
 
-// This adds custom jest matchers from jest-dom
-import "jest-dom/extend-expect";
+describe("ImageUploader", () => {
+  let images;
 
-afterEach(cleanup);
-
-it("renders without crashing", () => {
-  const div = document.createElement("div");
-  ReactDOM.render(<ImageUploader onDrop={() => {}} />, div);
-  ReactDOM.unmountComponentAtNode(div);
-});
-
-it("should invoke passed onDrop when the event occurs", () => {
-  const file = new File([JSON.stringify({ ping: true })], "ping.json", {
-    type: "application/json"
+  beforeEach(() => {
+    images = [
+      createFile("cats.png", 1234, "image/png"),
+      createFile("dogs.png", 2345, "image/png")
+    ];
   });
-  const data = mockData([file]);
-  const onDrop = jest.fn();
 
-  const ui = <ImageUploader onDrop={onDrop} />;
-  const { container } = render(ui);
-  const dropzone = container.querySelector("div");
+  afterEach(cleanup);
 
-  fireEvent.drop(dropzone, data);
-  expect(onDrop).toHaveBeenCalled();
-});
-
-it("should show another message when drag is active", async () => {
-  const file = new File([`randomicbinaries`], "image.png", {
-    type: "image/png"
+  it("renders without crashing", () => {
+    const div = document.createElement("div");
+    ReactDOM.render(
+      <WindowContext.Provider value={{ width: 1920, height: 1080 }}>
+        <ImageUploader onUpload={() => {}} />
+      </WindowContext.Provider>,
+      div
+    );
+    ReactDOM.unmountComponentAtNode(div);
   });
-  const data = mockData([file]);
 
-  const ui = <ImageUploader onDrop={jest.fn()} />;
-  const { container } = render(ui);
-  const dropzone = container.querySelector("div");
+  it("should update preview when images were picked", async () => {
+    const ui = (
+      <WindowContext.Provider value={{ width: 1920, height: 1080 }}>
+        <ImageUploader onUpload={jest.fn()} />
+      </WindowContext.Provider>
+    );
+    const { container, getByText } = render(ui);
+    const input = container.querySelector("input");
 
-  dispatchEvt(dropzone, "dragenter", data);
-  await flushPromises(ui, container);
-  expect(dropzone).toHaveTextContent("Drop the image here");
+    Object.defineProperty(input, "files", { value: images });
+
+    // Simulate change with fake images
+    dispatchEvt(input, "change");
+    await flushPromises(ui, container);
+
+    // Wait for UI update
+    await waitForElement(() => getByText(/send images/i));
+
+    const imgs = container.querySelectorAll("img");
+    expect(imgs).toHaveLength(images.length);
+  });
+
+  it("should not show send button if no images were selected", async () => {
+    const ui = (
+      <WindowContext.Provider value={{ width: 1920, height: 1080 }}>
+        <ImageUploader onUpload={jest.fn()} />
+      </WindowContext.Provider>
+    );
+    const { container } = render(ui);
+    const input = container.querySelector("input");
+
+    Object.defineProperty(input, "files", { value: [] });
+
+    // Simulate change with fake images
+    dispatchEvt(input, "change");
+    await flushPromises(ui, container);
+
+    // Look for send button
+    const sendButton = container.querySelector("button");
+    expect(sendButton).toBeNull();
+
+    const imgs = container.querySelectorAll("img");
+    expect(imgs).toHaveLength(0);
+  });
+
+  it("should invoke onUpload when user requests it", async () => {
+    const onUpload = jest.fn();
+    const ui = (
+      <WindowContext.Provider value={{ width: 1920, height: 1080 }}>
+        <ImageUploader onUpload={onUpload} />
+      </WindowContext.Provider>
+    );
+    const { container, getByText } = render(ui);
+    const input = container.querySelector("input");
+
+    Object.defineProperty(input, "files", { value: images });
+
+    dispatchEvt(input, "change");
+    await flushPromises(ui, container);
+
+    const sendButton = await waitForElement(() => getByText(/send images/i));
+
+    fireEvent.click(sendButton);
+    expect(onUpload).toHaveBeenCalledTimes(1);
+    expect(onUpload).toHaveBeenCalledWith(
+      images.map(image => ({
+        name: image.name,
+        data: `data:image/png;base64,cmFuZG9taWNiYXNlNjRpbWFnZQ==`
+      }))
+    );
+  });
 });
 
 /**
@@ -62,16 +123,12 @@ function dispatchEvt(node, type, data) {
   fireEvent(node, event);
 }
 
-function mockData(files) {
-  return {
-    dataTransfer: {
-      files,
-      items: files.map(file => ({
-        kind: "file",
-        type: file.type,
-        getAsFile: () => file
-      })),
-      types: ["Files"]
+function createFile(name, size, type) {
+  const file = new File([`randomicbase64image`], name, { type });
+  Object.defineProperty(file, "size", {
+    get() {
+      return size;
     }
-  };
+  });
+  return file;
 }

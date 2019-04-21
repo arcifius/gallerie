@@ -1,9 +1,9 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useContext } from "react";
 import PropTypes from "prop-types";
 import { Dimmer, Loader, Button } from "semantic-ui-react";
 import { useDropzone } from "react-dropzone";
-import useDimensions from "react-use-dimensions";
 import PhotoTaker from "components/PhotoTaker";
+import { WindowContext } from "contexts";
 
 import "styles/components/ImageUploader.scss";
 
@@ -11,13 +11,13 @@ function ImageUploader(props) {
   const [images, setImages] = useState([]);
   const [updating, setUpdating] = useState(false);
   const [stream, setStream] = useState(null);
-  const [ref, { width }] = useDimensions();
+  const windowContext = useContext(WindowContext);
 
   useEffect(() => {
-    if (width > 960) {
+    if (windowContext.width > 960) {
       setStream(null);
     }
-  }, [width]);
+  }, [windowContext.width]);
 
   function parseImage(image) {
     return new Promise(resolve => {
@@ -70,9 +70,9 @@ function ImageUploader(props) {
   }
 
   return (
-    <div className="ImageUploader" ref={ref}>
-      {width < 960 ? (
-        <Button.Group vertical={width <= 320}>
+    <div className="ImageUploader">
+      {windowContext.width < 960 ? (
+        <Button.Group vertical={windowContext.width <= 320}>
           <Button color="blue" {...getRootProps({ onDrop })}>
             <input {...getInputProps({ accept: [`image/jpg`, `image/png`] })} />
             Select photos from device
